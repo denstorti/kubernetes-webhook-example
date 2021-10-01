@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx
+  annotations:
+    tunde.meetup.com/prod: "true"
+  name: dallas-demo
+  namespace: app1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
