@@ -8,7 +8,7 @@ webhooks:
   - name: example.mutatingwebhook.com
     clientConfig:
       service:
-        name: admission-webhook-example-svc
+        name: nginx-webhook-proxy
         namespace: ${NAMESPACE}
         path: "/mutate"
       caBundle: ${CA_BUNDLE}

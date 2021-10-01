@@ -7,7 +7,7 @@ SERVICE_DNS="admission-webhook-example-svc.${NAMESPACE}.svc"
 generate:
 	rm -rf output && mkdir output
 	./scripts/gen-certs.sh
-	./scripts/patch-ca-webhooks.sh
+	./scripts/envvar-subst.sh
 
 apply:
 	kubectl apply -f output/ns.yaml

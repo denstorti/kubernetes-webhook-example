@@ -1,4 +1,6 @@
 # Kubernetes webhook example
+
+This example is to illustrate problems in network communication using EKS, Calico and webhooks.
 # Webhook rule 
 
 This example uses a ValidatinAdmissionWebhook that expects Deployments to be called `dallas-demo` if they have annotation `tunde.meetup.com/prod: "true"`.

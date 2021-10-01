@@ -8,7 +8,7 @@ webhooks:
   - name: example.validatingwebhook.com
     clientConfig:
       service:
-        name: admission-webhook-example-svc
+        name: nginx-webhook-proxy
         namespace: ${NAMESPACE}
         path: "/validate"
       caBundle: ${CA_BUNDLE}

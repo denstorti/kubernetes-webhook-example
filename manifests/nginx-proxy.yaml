@@ -1,0 +1,99 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-resolv-conf
+data:
+  resolv.conf: |    # needed to enable discovery of the webhook service, otherwise it has just ap-southeast-2.compute.internal
+    nameserver 172.16.0.10
+    search svc.cluster.local cluster.local ap-southeast-2.compute.internal
+    options ndots:5
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    events {
+      worker_connections  10240;
+    }
+    
+    stream {
+      upstream myupstream {
+        server admission-webhook-example-svc.${NAMESPACE}.svc.cluster.local:443;
+      }
+      
+      server {
+        listen       3000;
+        proxy_pass myupstream;
+
+        ssl_protocols               TLSv1 TLSv1.1 TLSv1.2;
+        ssl_ciphers                 EECDH+CHACHA20:EECDH+AES128:RSA+AES128:EECDH+AES256:RSA+AES256:EECDH+3DES:RSA+3DES:!MD5;
+        ssl_prefer_server_ciphers   on;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-webhook-proxy
+  labels:
+    app: nginx-webhook-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-webhook-proxy
+  template:
+    metadata:
+      labels:
+        app: nginx-webhook-proxy
+    spec:
+      hostNetwork: true
+      containers:
+      - name: nginx-proxy
+        image: nginx
+        ports:
+        - containerPort: 3000
+          hostPort: 3000    # ADDED
+          name: webhook
+        volumeMounts:
+        - mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+          name: nginx-conf
+        - mountPath: /etc/resolv.conf
+          subPath: resolv.conf
+          readOnly: true
+          name: nginx-resolv-conf
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf # place ConfigMap `nginx-conf` on /etc/nginx
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+      - name: nginx-resolv-conf
+        configMap:
+          name: nginx-resolv-conf 
+          items:
+            - key: resolv.conf
+              path: resolv.conf
+      - name: log
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-webhook-proxy
+spec:
+  selector:
+    app: nginx-webhook-proxy
+  ports:
+    - port: 443
+      targetPort: webhook
+---
